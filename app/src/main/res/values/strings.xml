@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Locatie Taak</string>
+    <string name="title_activity_maps">Locatie Taak</string>
+    <string name="setting_enabled" translatable="false">Alarm</string>
+    <string name="geofence_transition_entered">Entered</string>
+    <string name="geofence_transition_exited">Exited</string>
+    <string name="unknown_geofence_transition">Unknown Transition</string>
+    <string name="geofence_transition_notification_text">
+        Click to return to app
+    </string>
+    <string name="geofence_transition_invalid_type">
+        Geofence transition error: invalid transition type %1$d
+    </string>
+    <string name="silent_mode_activated">Silent mode activated</string>
+    <string name="touch_to_relaunch">Touch to launch the app.</string>
+    <string name="back_to_normal">Back to normal</string>
+</resources>
