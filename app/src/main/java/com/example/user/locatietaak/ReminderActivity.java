@@ -79,7 +79,7 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
 
     //widgets
     FloatingActionButton pick;
-    EditText reminder;
+    public EditText reminder;
     ImageView delete;
     //vars
     private PlaceListAdapter mAdapter;
@@ -90,10 +90,10 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
     PlaceDbHelper helper;
     List<DataModel> datamodel;
     String arrr;
-    int ar;
-    Place place;
-    String placeID;
-    //private GeofencingClient mGeofencingClient;
+    public int ar;
+    public Place place;
+    public String placeID;
+    public String send;
     //constants
     public static final String TAG = ReminderActivity.class.getSimpleName();
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
@@ -158,8 +158,6 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
             }
 
         });
-
-        deleteplace();
         reminder.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
@@ -169,6 +167,8 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
                 return false;
             }
         });
+        
+        deleteplace();
 
 
                 //coonecting to api
@@ -186,100 +186,6 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
 
     }
 
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        refreshPlacesData();
-        Log.i(TAG, "API Client Connection Successful!");
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-    }
-
-
-    public void refreshPlacesData() {
-        Uri uri = PlaceContract.PlaceEntry.CONTENT_URI;
-        Cursor data = getContentResolver().query(uri, null, null, null, null);
-
-        if (data == null || data.getCount() == 0) return;
-        List<String> guids = new ArrayList<String>();
-        while (data.moveToNext()) {
-            guids.add(data.getString(data.getColumnIndex(PlaceContract.PlaceEntry.COLUMN_PLACE_ID)));
-        }
-        PendingResult<PlaceBuffer> placeResult = Places.GeoDataApi.getPlaceById(mClient, guids.toArray(new String[guids.size()]));
-        placeResult.setResultCallback(new ResultCallback<PlaceBuffer>() {
-            @Override
-            public void onResult(@NonNull PlaceBuffer places) {
-
-                mAdapter.swapPlaces(places);
-                mGeofencing.updateGeofencesList(places);
-                if (mIsEnabled) mGeofencing.registerAllGeofences();
-            }
-        });
-    }
-
-    @SuppressLint("RestrictedApi")
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PLACE_PICKER_REQUEST && resultCode == RESULT_OK && data != null) {
-            place = PlacePicker.getPlace(this, data);
-            if (place == null) {
-                Log.i(TAG, "No place selected");
-                return;
-            }
-
-            placeID = place.getId();
-
-
-            // Insert new place into DB
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(PlaceContract.PlaceEntry.COLUMN_PLACE_ID, placeID);
-            getContentResolver().insert(PlaceContract.PlaceEntry.CONTENT_URI, contentValues);
-
-
-            //deleting
-
-
-            //live data information
-            refreshPlacesData();
-
-            // 1. Create a NotificationManager
-            NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            // 2. Create a PendingIntent for AllGeofencesActivity
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            PendingIntent pendingNotificationIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-            String send = reminder.getText().toString();
-            long[] pattern = {1000,1000,1000,1000,1000,1000,1000,1000,1000};
-            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("lOCATION ALERT")
-                    .setContentText(send + "@" + place.getName())
-                    .setContentIntent(pendingNotificationIntent)
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText("LOC"))
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(false)
-                    .setOnlyAlertOnce(true)
-                    .setSound(alarmSound)
-                    .setVisibility(VISIBILITY_PUBLIC)
-                    .setVibrate(pattern)
-                    .build();
-            notificationManager.notify(0, notification);
-
-        }
-    }
-    private void hideSoftKeyboard(){
-        reminder.clearFocus();
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(reminder.getWindowToken(), 0);
-    }
     public void deleteplace(){
         mRecyclerView.addOnItemTouchListener(new Recyclerclick(getApplicationContext(), mRecyclerView, new Recyclerclick.OnItemClickListener() {
             @Override
@@ -326,7 +232,102 @@ public class ReminderActivity extends AppCompatActivity implements GoogleApiClie
         }));
     }
 
-    //****************permission block************************************************
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        refreshPlacesData();
+        Log.i(TAG, "API Client Connection Successful!");
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    }
+
+    public String reminderMessage(){
+        send = reminder.getText().toString();
+        return send;
+    }
+
+
+    public void refreshPlacesData() {
+        Uri uri = PlaceContract.PlaceEntry.CONTENT_URI;
+        Cursor data = getContentResolver().query(uri, null, null, null, null);
+
+        if (data == null || data.getCount() == 0) return;
+        List<String> guids = new ArrayList<String>();
+        while (data.moveToNext()) {
+            guids.add(data.getString(data.getColumnIndex(PlaceContract.PlaceEntry.COLUMN_PLACE_ID)));
+        }
+        PendingResult<PlaceBuffer> placeResult = Places.GeoDataApi.getPlaceById(mClient, guids.toArray(new String[guids.size()]));
+        placeResult.setResultCallback(new ResultCallback<PlaceBuffer>() {
+            @Override
+            public void onResult(@NonNull PlaceBuffer places) {
+
+                mAdapter.swapPlaces(places);
+                mGeofencing.updateGeofencesList(places);
+                if (mIsEnabled) mGeofencing.registerAllGeofences();
+            }
+        });
+    }
+
+    @SuppressLint("RestrictedApi")
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST && resultCode == RESULT_OK && data != null) {
+            place = PlacePicker.getPlace(this, data);
+            if (place == null) {
+                Log.i(TAG, "No place selected");
+                return;
+            }
+
+            placeID = place.getId();
+
+
+            // Insert new place into DB
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(PlaceContract.PlaceEntry.COLUMN_PLACE_ID, placeID);
+            getContentResolver().insert(PlaceContract.PlaceEntry.CONTENT_URI, contentValues);
+
+            //live data information
+            refreshPlacesData();
+
+           // 1. Create a NotificationManager
+            NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            // 2. Create a PendingIntent for AllGeofencesActivity
+            Intent intent = new Intent(this, ReminderActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pendingNotificationIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            long[] pattern = {1000,1000,1000,1000,1000,1000,1000,1000};
+            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Notification notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("lOCATION ALERT ADDED")
+                    .setContentText(reminderMessage() + "@" + place.getName())
+                    .setContentIntent(pendingNotificationIntent)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText("LOC"))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(false)
+                    .setOnlyAlertOnce(true)
+                    .setSound(alarmSound)
+                    .setVisibility(VISIBILITY_PUBLIC)
+                    .setVibrate(pattern)
+                    .build();
+            notificationManager.notify(0, notification);
+
+        }
+    }
+    private void hideSoftKeyboard(){
+        reminder.clearFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(reminder.getWindowToken(), 0);
+    }
+
+    //****************permission block**********************************************
     private void getLocPermission() {
         Log.i(TAG, "getting permission");
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
